@@ -1,10 +1,10 @@
-const fs = require("fs");
-const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const slowDown = require("express-slow-down");
 const helmet = require("helmet");
+const requestLog = require("./middleware/requestLog");
+const logging = require("./middleware/logging");
 
 const app = express();
 app.disable("x-powered-by");
@@ -24,24 +24,20 @@ app.use(speedLimiter);
 app.use(helmet());
 app.use(
   cors({
-    origin: ["http://localhost:3500", "https://google.com"],
+    origin: [
+      "http://localhost:3500",
+      "http://localhost:3501",
+      "http://localhost:5173",
+    ],
   }),
 );
 
-app.use(express.static("static"));
+app.use(requestLog);
+app.use(logging);
 
-app.get("/", (req, res) => {
-  res.json({
-    message: "hello",
-  });
-});
-app.get("/tests/html", (req, res) => {
-  res.json({ html: "HTML!" });
-});
-app.get("/mark", (req, res) => {
+app.use(express.static("public"));
 
-  res.sendFile(path.join(__dirname, "mark.html"));
-})
+app.use("/quiz", require("./routes/quizzes"));
 
 app.listen(3501, () => {
   console.log("listen on");
